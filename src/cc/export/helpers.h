@@ -76,6 +76,7 @@ struct _name##_table_t { \
   void (*call) (void *, int index); \
   void (*increment) (_key_type, ...); \
   int (*get_stackid) (void *, u64); \
+  u64 (*redirect_map) (int, int); \
   u32 max_entries; \
   int flags; \
 }; \
