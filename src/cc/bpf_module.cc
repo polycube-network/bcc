@@ -149,7 +149,16 @@ BPFModule::~BPFModule() {
 
   if (btf_)
     delete btf_;
+  auto it = ts_->lower_bound(Path({id_}));
+  while (it != ts_->upper_bound(Path({id_}))) {
+    // try to delete public and shared tables that are mine
+    if (it->second.is_shared && !it->second.is_extern) {
+      ts_->Delete(Path({maps_ns_, it->second.name}));
+    }
+    it++;
+  }
 
+  // delete all local tables
   ts_->DeletePrefix(Path({id_}));
 }
 
