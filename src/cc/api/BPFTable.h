@@ -39,6 +39,7 @@ template <class KeyType, class ValueType>
 class BPFTableBase {
  public:
   size_t capacity() { return desc.max_entries; }
+  int fd() const { return desc.fd; }
 
   StatusTuple string_to_key(const std::string& key_str, KeyType* key) {
     return desc.key_sscanf(key_str.c_str(), key);
@@ -391,7 +392,7 @@ class BPFCgroupArray : public BPFTableBase<int, int> {
 class BPFDevmapTable : public BPFTableBase<int, int> {
 public:
   BPFDevmapTable(const TableDesc& desc);
-  
+
   StatusTuple update_value(const int& index, const int& value);
   StatusTuple get_value(const int& index, int& value);
   StatusTuple remove_value(const int& index);
