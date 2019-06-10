@@ -102,8 +102,8 @@ class TableDesc {
   sscanf_fn leaf_sscanf;
   snprintf_fn key_snprintf;
   snprintf_fn leaf_snprintf;
-  bool is_shared;
-  bool is_extern;
+  bool is_shared; // shared with other modules (PUBLIC of SHARED)
+  bool is_extern; // created by another module ("extern")
 };
 
 /// MapTypesVisitor gets notified of new bpf tables, and has a chance to parse

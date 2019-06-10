@@ -1134,9 +1134,10 @@ bool BTypeVisitor::VisitVarDecl(VarDecl *Decl) {
     TableStorage::iterator table_it;
     table.name = Decl->getName();
     Path local_path({fe_.id(), table.name});
-    Path maps_ns_path({"ns", fe_.maps_ns(), table.name});
+    Path maps_ns_path({fe_.maps_ns(), table.name});
     Path global_path({table.name});
     QualType key_type, leaf_type;
+    bool try_to_steal = (fe_.other_id() != "");
 
     unsigned i = 0;
     for (auto F : RD->fields()) {
@@ -1225,22 +1226,54 @@ bool BTypeVisitor::VisitVarDecl(VarDecl *Decl) {
         error(GET_BEGINLOC(Decl), "reference to undefined table");
         return false;
       }
+      table_it->second.is_shared = true;
+      if (fe_.table_storage().Find(global_path, table_it)) {
+        if (try_to_steal) {
+          Path other_id_path({fe_.other_id(), table.name});
+          fe_.table_storage().Find(other_id_path, table_it);
+          table_it->second.is_shared = false; // it is not shared on that one.
+          return true;
+        }
+        error(GET_BEGINLOC(Decl), "table already exists");
+        return false;
+      }
       fe_.table_storage().Insert(global_path, table_it->second.dup());
       return true;
     } else if(A->getName() == "maps/shared") {
       if (table.name.substr(0, 2) == "__")
         table.name = table.name.substr(2);
       Path local_path({fe_.id(), table.name});
-      Path maps_ns_path({"ns", fe_.maps_ns(), table.name});
+      Path maps_ns_path({fe_.maps_ns(), table.name});
       if (!fe_.table_storage().Find(local_path, table_it)) {
         error(GET_BEGINLOC(Decl), "reference to undefined table");
+        return false;
+      }
+      table_it->second.is_shared = true;
+      if (fe_.table_storage().Find(maps_ns_path, table_it)) {
+        if (try_to_steal) {
+          Path other_id_path({fe_.other_id(), table.name});
+          fe_.table_storage().Find(other_id_path, table_it);
+          table_it->second.is_shared = false; // it is not shared on that one.
+          return true;
+        }
+        error(GET_BEGINLOC(Decl), "table already exists");
         return false;
       }
       fe_.table_storage().Insert(maps_ns_path, table_it->second.dup());
       return true;
     }
 
-    if (!table.is_extern) {
+    bool steal = false;
+
+    // should I try to steal maps?
+    if (try_to_steal) {
+      Path other_id_path({fe_.other_id(), table.name});
+      if (fe_.table_storage().Find(other_id_path, table_it)) {
+        table = table_it->second.dup();
+        steal = true; // steal it: don't create a new one
+      }
+    }
+    if (!table.is_extern && !steal) {
       if (map_type == BPF_MAP_TYPE_UNSPEC) {
         error(GET_BEGINLOC(Decl), "unsupported map type: %0") << A->getName();
         return false;
@@ -1253,7 +1286,7 @@ bool BTypeVisitor::VisitVarDecl(VarDecl *Decl) {
                       (int)table.max_entries, table.flags));
     }
 
-    if (!table.is_extern)
+    if (!table.is_extern && !steal)
       fe_.table_storage().VisitMapType(table, C, key_type, leaf_type);
     fe_.table_storage().Insert(local_path, move(table));
   } else if (const PointerType *P = Decl->getType()->getAs<PointerType>()) {
@@ -1366,11 +1399,13 @@ BFrontendAction::BFrontendAction(llvm::raw_ostream &os, unsigned flags,
                                  FuncSource &func_src, std::string &mod_src,
                                  const std::string &maps_ns,
                                  fake_fd_map_def &fake_fd_map,
-                                 std::map<std::string, std::vector<std::string>> &perf_events)
+                                 std::map<std::string, std::vector<std::string>> &perf_events,
+                                 const std::string &other_id)
     : os_(os),
       flags_(flags),
       ts_(ts),
       id_(id),
+      other_id_(other_id),
       maps_ns_(maps_ns),
       rewriter_(new Rewriter),
       main_path_(main_path),

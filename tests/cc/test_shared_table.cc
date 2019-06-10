@@ -26,50 +26,50 @@ BPF_TABLE("extern", int, int, mysharedtable, 1024);
 )";
 
 TEST_CASE("test shared table", "[shared_table]") {
-  // deploy 4 ebpf programs: _ns1_a and _ns1_b are in ns1, _ns2_a and _ns2_b in ns2
-  ebpf::BPF bpf_ns1_a(0, nullptr, false, "ns1");
-  ebpf::BPF bpf_ns1_b(0, nullptr, false, "ns1");
-  ebpf::BPF bpf_ns2_a(0, nullptr, false, "ns2");
-  ebpf::BPF bpf_ns2_b(0, nullptr, false, "ns2");
+  // deploy 4 ebpf programs: 1a and 1b are in ns1, 2a and 2b in ns2
+  ebpf::BPF bpf1a(0, nullptr, false, "ns1");
+  ebpf::BPF bpf1b(0, nullptr, false, "ns1");
+  ebpf::BPF bpf2a(0, nullptr, false, "ns2");
+  ebpf::BPF bpf2b(0, nullptr, false, "ns2");
 
   ebpf::StatusTuple res(0);
 
-  res = bpf_ns1_a.init(BPF_PROGRAM1);
+  res = bpf1a.init(BPF_PROGRAM1);
   REQUIRE(res.code() == 0);
 
-  res = bpf_ns1_b.init(BPF_PROGRAM2);
+  res = bpf1b.init(BPF_PROGRAM2);
   REQUIRE(res.code() == 0);
 
-  res = bpf_ns2_a.init(BPF_PROGRAM1);
+  res = bpf2a.init(BPF_PROGRAM1);
   REQUIRE(res.code() == 0);
 
-  res = bpf_ns2_b.init(BPF_PROGRAM2);
+  res = bpf2b.init(BPF_PROGRAM2);
   REQUIRE(res.code() == 0);
 
   // get references to all tables
-  ebpf::BPFArrayTable<int> t_ns1_a = bpf_ns1_a.get_array_table<int>("mysharedtable");
-  ebpf::BPFArrayTable<int> t_ns1_b = bpf_ns1_b.get_array_table<int>("mysharedtable");
-  ebpf::BPFArrayTable<int> t_ns2_a = bpf_ns2_a.get_array_table<int>("mysharedtable");
-  ebpf::BPFArrayTable<int> t_ns2_b = bpf_ns2_b.get_array_table<int>("mysharedtable");
+  ebpf::BPFArrayTable<int> t1a = bpf1a.get_array_table<int>("mysharedtable");
+  ebpf::BPFArrayTable<int> t1b = bpf1b.get_array_table<int>("mysharedtable");
+  ebpf::BPFArrayTable<int> t2a = bpf2a.get_array_table<int>("mysharedtable");
+  ebpf::BPFArrayTable<int> t2b = bpf2b.get_array_table<int>("mysharedtable");
 
   // test that tables within the same ns are shared
   int v1, v2, v3;
-  res = t_ns1_a.update_value(13, 42);
+  res = t1a.update_value(13, 42);
   REQUIRE(res.code() == 0);
 
-  res = t_ns1_b.get_value(13, v1);
+  res = t1b.get_value(13, v1);
   REQUIRE(res.code() == 0);
   REQUIRE(v1 == 42);
 
   // test that tables are isolated within different ns
-  res = t_ns2_a.update_value(13, 69);
+  res = t2a.update_value(13, 69);
   REQUIRE(res.code() == 0);
 
-  res = t_ns2_b.get_value(13, v2);
+  res = t2b.get_value(13, v2);
   REQUIRE(res.code() == 0);
   REQUIRE(v2 == 69);
 
-  res = t_ns1_b.get_value(13, v3);
+  res = t1b.get_value(13, v3);
   REQUIRE(res.code() == 0);
   REQUIRE(v3 == 42);  // value should still be 42
 }

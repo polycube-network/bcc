@@ -91,7 +91,8 @@ class BPFModule {
 
  public:
   BPFModule(unsigned flags, TableStorage *ts = nullptr, bool rw_engine_enabled = true,
-            const std::string &maps_ns = "", bool allow_rlimit = true);
+            const std::string &maps_ns = "", bool allow_rlimit = true,
+            const std::string &other_id = "");
   ~BPFModule();
   int free_bcc_memory();
   int load_b(const std::string &filename, const std::string &proto_filename);
@@ -99,6 +100,7 @@ class BPFModule {
   int load_string(const std::string &text, const char *cflags[], int ncflags);
   std::string id() const { return id_; }
   std::string maps_ns() const { return maps_ns_; }
+  std::string other_id() const { return other_id_; }
   size_t num_functions() const;
   uint8_t * function_start(size_t id) const;
   uint8_t * function_start(const std::string &name) const;
@@ -162,6 +164,7 @@ class BPFModule {
   std::map<llvm::Type *, std::string> writers_;
   std::string id_;
   std::string maps_ns_;
+  std::string other_id_;
   std::string mod_src_;
   std::map<std::string, std::string> src_dbg_fmap_;
   TableStorage *ts_;

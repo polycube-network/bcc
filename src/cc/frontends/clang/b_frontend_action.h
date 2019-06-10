@@ -157,7 +157,8 @@ class BFrontendAction : public clang::ASTFrontendAction {
                   FuncSource &func_src, std::string &mod_src,
                   const std::string &maps_ns,
                   fake_fd_map_def &fake_fd_map,
-                  std::map<std::string, std::vector<std::string>> &perf_events);
+                  std::map<std::string, std::vector<std::string>> &perf_events,
+                  const std::string &other_id);
 
   // Called by clang when the AST has been completed, here the output stream
   // will be flushed.
@@ -169,6 +170,7 @@ class BFrontendAction : public clang::ASTFrontendAction {
   clang::Rewriter &rewriter() const { return *rewriter_; }
   TableStorage &table_storage() const { return ts_; }
   std::string id() const { return id_; }
+  std::string other_id() const { return other_id_; }
   std::string maps_ns() const { return maps_ns_; }
   bool is_rewritable_ext_func(clang::FunctionDecl *D);
   void DoMiscWorkAround();
@@ -183,6 +185,7 @@ class BFrontendAction : public clang::ASTFrontendAction {
   unsigned flags_;
   TableStorage &ts_;
   std::string id_;
+  std::string other_id_;
   std::string maps_ns_;
   std::unique_ptr<clang::Rewriter> rewriter_;
   friend class BTypeVisitor;

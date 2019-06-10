@@ -1231,7 +1231,7 @@ StatusTuple CodegenLLVM::visit_func_decl_stmt_node(FuncDeclStmtNode *n) {
 }
 
 StatusTuple CodegenLLVM::visit(Node *root, TableStorage &ts, const string &id,
-                               const string &maps_ns) {
+                               const string &maps_ns, const std::string &other_id) {
   scopes_->set_current(scopes_->top_state());
   scopes_->set_current(scopes_->top_var());
 
