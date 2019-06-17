@@ -18,6 +18,7 @@
 #include <sys/utsname.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <iostream>
 
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/ASTContext.h>
@@ -759,14 +760,19 @@ bool BTypeVisitor::VisitCallExpr(CallExpr *Call) {
         // find the table fd, which was opened at declaration time
         TableStorage::iterator desc;
         Path local_path({fe_.id(), Ref->getDecl()->getName()});
+        Path maps_ns_path({fe_.maps_ns(), Ref->getDecl()->getName()});
         Path global_path({Ref->getDecl()->getName()});
         if (!fe_.table_storage().Find(local_path, desc)) {
-          if (!fe_.table_storage().Find(global_path, desc)) {
-            error(GET_ENDLOC(Ref), "bpf_table %0 failed to open") << Ref->getDecl()->getName();
-            return false;
-          }
+          //if (!fe_.table_storage().Find(maps_ns_path, desc)) {
+          //  if (!fe_.table_storage().Find(global_path, desc)) {
+              error(GET_ENDLOC(Ref), "bpf_table %0 failed to open") << Ref->getDecl()->getName();
+              std::cout << "error finding table " << std::endl;
+              return false;
+          //  }
+          //}
         }
         string fd = to_string(desc->second.fd >= 0 ? desc->second.fd : desc->second.fake_fd);
+        std::cout << "Fd of " << desc->second.name << " is : " << fd << std::endl;
         string prefix, suffix;
         string txt;
         auto rewrite_start = GET_BEGINLOC(Call);
@@ -1217,6 +1223,8 @@ bool BTypeVisitor::VisitVarDecl(VarDecl *Decl) {
       }
       table = table_it->second.dup();
       table.is_extern = true;
+      std::cout << "processing external map " << table.name << " fd is " << table.fd << std::endl;
+      std::cout << "original map was fd " << table_it->second.fd << std::endl;
     } else if (A->getName() == "maps/export") {
       if (table.name.substr(0, 2) == "__")
         table.name = table.name.substr(2);
@@ -1270,6 +1278,7 @@ bool BTypeVisitor::VisitVarDecl(VarDecl *Decl) {
       Path other_id_path({fe_.other_id(), table.name});
       if (fe_.table_storage().Find(other_id_path, table_it)) {
         table = table_it->second.dup();
+        table.fake_fd = -10000;
         steal = true; // steal it: don't create a new one
       }
     }

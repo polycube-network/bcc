@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <vector>
 #include <linux/bpf.h>
+#include <iostream>
 
 #include <llvm/ExecutionEngine/MCJIT.h>
 #include <llvm/ExecutionEngine/SectionMemoryManager.h>
@@ -149,10 +150,12 @@ BPFModule::~BPFModule() {
 
   if (btf_)
     delete btf_;
+
   auto it = ts_->lower_bound(Path({id_}));
   while (it != ts_->upper_bound(Path({id_}))) {
     // try to delete public and shared tables that are mine
     if (it->second.is_shared && !it->second.is_extern) {
+      std::cout << "deleting public/shared table " << it->second.name << std::endl;
       ts_->Delete(Path({maps_ns_, it->second.name}));
     }
     it++;
@@ -337,6 +340,8 @@ int BPFModule::load_maps(sec_map_def &sections) {
     max_entries = get<4>(map.second);
     map_flags   = get<5>(map.second);
 
+    //std::cout << "creating << " << map_name << std::endl;
+
     struct bpf_create_map_attr attr = {};
     attr.map_type = (enum bpf_map_type)map_type;
     attr.name = map_name;
@@ -361,13 +366,18 @@ int BPFModule::load_maps(sec_map_def &sections) {
     map_fds[fake_fd] = fd;
   }
 
+  // MAURICIO: is this missing a loop to add steal maps here?
+
   // update map table fd's
   for (auto it = ts_->begin(), up = ts_->end(); it != up; ++it) {
     TableDesc &table = it->second;
+    //std::cout << "updating map fd for " << table.name << std::endl;
     if (map_fds.find(table.fake_fd) != map_fds.end()) {
       table.fd = map_fds[table.fake_fd];
       table.fake_fd = 0;
     }
+
+    //std::cout << "fd of " << table.name << " is " << table.fd << std::endl;
   }
 
   // update instructions

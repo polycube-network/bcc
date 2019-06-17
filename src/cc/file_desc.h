@@ -17,6 +17,8 @@
 #pragma once
 
 #include <unistd.h>
+#include <iostream>
+#include <cstring>
 
 namespace ebpf {
 
@@ -29,8 +31,10 @@ class FileDesc {
   FileDesc(const FileDesc &that) = delete;
 
   ~FileDesc() {
-    if (fd_ >= 0)
+    if (fd_ >= 0) {
+      std::cout << "closing fd: " << fd_ << std::endl;
       ::close(fd_);
+    }
   }
 
   FileDesc &operator=(int fd) {
@@ -51,6 +55,9 @@ class FileDesc {
   FileDesc dup() const {
     if (fd_ >= 0) {
       int dup_fd = ::dup(fd_);
+      if (dup_fd == -1) {
+        std::cout << "WTF::::::::::: failed to open fd " << std::strerror(errno) << std::endl;
+      }
       return FileDesc(dup_fd);
     } else {
       return FileDesc(-1);
