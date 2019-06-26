@@ -26,7 +26,7 @@ namespace ebpf {
 /// disallowed (call dup instead), and cleanup happens automatically.
 class FileDesc {
  public:
-  explicit FileDesc(int fd = -1) : fd_(fd) {}
+  explicit FileDesc(int fd = -1) : fd_(fd) { std::cout << "creating file descriptor " << fd_ << std::endl; }
   FileDesc(FileDesc &&that) : fd_(-1) { *this = std::move(that); }
   FileDesc(const FileDesc &that) = delete;
 
@@ -60,6 +60,7 @@ class FileDesc {
       }
       return FileDesc(dup_fd);
     } else {
+      std::cout << "trying to duplicate non valid file descriptor" << std::endl;
       return FileDesc(-1);
     }
   }

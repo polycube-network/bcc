@@ -760,8 +760,8 @@ bool BTypeVisitor::VisitCallExpr(CallExpr *Call) {
         // find the table fd, which was opened at declaration time
         TableStorage::iterator desc;
         Path local_path({fe_.id(), Ref->getDecl()->getName()});
-        Path maps_ns_path({fe_.maps_ns(), Ref->getDecl()->getName()});
-        Path global_path({Ref->getDecl()->getName()});
+        //Path maps_ns_path({fe_.maps_ns(), Ref->getDecl()->getName()});
+        //Path global_path({Ref->getDecl()->getName()});
         if (!fe_.table_storage().Find(local_path, desc)) {
           //if (!fe_.table_storage().Find(maps_ns_path, desc)) {
           //  if (!fe_.table_storage().Find(global_path, desc)) {
@@ -771,8 +771,8 @@ bool BTypeVisitor::VisitCallExpr(CallExpr *Call) {
           //  }
           //}
         }
-        string fd = to_string(desc->second.fd >= 0 ? desc->second.fd : desc->second.fake_fd);
-        std::cout << "Fd of " << desc->second.name << " is : " << fd << std::endl;
+        const string fd = to_string(desc->second.fd >= 0 ? desc->second.fd : desc->second.fake_fd);
+        std::cout << "VisitCallExpr: fd of " << desc->second.name << " is : " << fd << std::endl;
         string prefix, suffix;
         string txt;
         auto rewrite_start = GET_BEGINLOC(Call);
@@ -1215,6 +1215,7 @@ bool BTypeVisitor::VisitVarDecl(VarDecl *Decl) {
     } else if (A->getName() == "maps/cpumap") {
       map_type = BPF_MAP_TYPE_CPUMAP;
     } else if (A->getName() == "maps/extern") {
+      std::cout << "processing external map " << table.name << std::endl;
       if (!fe_.table_storage().Find(maps_ns_path, table_it)) {
         if (!fe_.table_storage().Find(global_path, table_it)) {
           error(GET_BEGINLOC(Decl), "reference to undefined table");
@@ -1223,8 +1224,7 @@ bool BTypeVisitor::VisitVarDecl(VarDecl *Decl) {
       }
       table = table_it->second.dup();
       table.is_extern = true;
-      std::cout << "processing external map " << table.name << " fd is " << table.fd << std::endl;
-      std::cout << "original map was fd " << table_it->second.fd << std::endl;
+      std::cout << " fd is " << table.fd << " original map was fd " << table_it->second.fd << std::endl;
     } else if (A->getName() == "maps/export") {
       if (table.name.substr(0, 2) == "__")
         table.name = table.name.substr(2);
@@ -1245,6 +1245,7 @@ bool BTypeVisitor::VisitVarDecl(VarDecl *Decl) {
         error(GET_BEGINLOC(Decl), "table already exists");
         return false;
       }
+      std::cout << "saving exort map" << table_it->second.name << std::endl;
       fe_.table_storage().Insert(global_path, table_it->second.dup());
       return true;
     } else if(A->getName() == "maps/shared") {
@@ -1420,7 +1421,7 @@ BFrontendAction::BFrontendAction(llvm::raw_ostream &os, unsigned flags,
       main_path_(main_path),
       func_src_(func_src),
       mod_src_(mod_src),
-      next_fake_fd_(-1),
+      next_fake_fd_(-10),
       fake_fd_map_(fake_fd_map),
       perf_events_(perf_events) {}
 

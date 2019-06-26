@@ -340,8 +340,6 @@ int BPFModule::load_maps(sec_map_def &sections) {
     max_entries = get<4>(map.second);
     map_flags   = get<5>(map.second);
 
-    //std::cout << "creating << " << map_name << std::endl;
-
     struct bpf_create_map_attr attr = {};
     attr.map_type = (enum bpf_map_type)map_type;
     attr.name = map_name;
@@ -364,21 +362,41 @@ int BPFModule::load_maps(sec_map_def &sections) {
     }
 
     map_fds[fake_fd] = fd;
+
+    std::cout << "map " << map_name << " created with fd " << fd << std::endl;
+
+    TableStorage::iterator table_it;
+    ts_->Find({id_, map_name}, table_it);
+    table_it->second.fd = fd;
+
+    // if the map is shared, update fd in global and/or map ns
+    if (table_it->second.is_shared) {
+      Path maps_ns_path({maps_ns_, map_name});
+      Path global_path({map_name});
+
+      if (ts_->Find(maps_ns_path, table_it)) {
+        table_it->second.fd = ::dup(fd);
+      }
+
+      if (ts_->Find(global_path, table_it)) {
+        table_it->second.fd = ::dup(fd);
+      }
+    }
   }
 
   // MAURICIO: is this missing a loop to add steal maps here?
 
-  // update map table fd's
-  for (auto it = ts_->begin(), up = ts_->end(); it != up; ++it) {
-    TableDesc &table = it->second;
-    //std::cout << "updating map fd for " << table.name << std::endl;
-    if (map_fds.find(table.fake_fd) != map_fds.end()) {
-      table.fd = map_fds[table.fake_fd];
-      table.fake_fd = 0;
-    }
-
-    //std::cout << "fd of " << table.name << " is " << table.fd << std::endl;
-  }
+//  // update map table fd's
+//  for (auto it = ts_->begin(), up = ts_->end(); it != up; ++it) {
+//    TableDesc &table = it->second;
+//    if (map_fds.find(table.fake_fd) != map_fds.end()) {
+//      table.fd = ::dup(map_fds[table.fake_fd]);
+//      table.fake_fd = 0;
+//      std::cout << "updating map fd for " << table.name << " fd: " << table.fd << std::endl;
+//    }
+//
+//    //std::cout << "fd of " << table.name << " is " << table.fd << std::endl;
+//  }
 
   // update instructions
   for (auto section : sections) {
