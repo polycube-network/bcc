@@ -359,7 +359,7 @@ int BPFModule::create_maps(std::map<std::string, std::pair<int, int>> &map_tids,
       inner_map_fds[map_name] = fd;
 
     map_fds[fake_fd] = fd;
-    
+
     // update map's fd in local table
     TableStorage::iterator table_it;
     ts_->Find({id_, map_name}, table_it);
@@ -584,6 +584,8 @@ int BPFModule::annotate_prog_tag(const string &name, int prog_fd,
   err = bpf_prog_compute_tag(insns, prog_len, &tag1);
   if (err)
     return err;
+
+#ifndef ENABLE_REMOTE_LIBBPF
   err = bpf_prog_get_tag(prog_fd, &tag2);
   if (err)
     return err;
@@ -591,6 +593,7 @@ int BPFModule::annotate_prog_tag(const string &name, int prog_fd,
     fprintf(stderr, "prog tag mismatch %llx %llx\n", tag1, tag2);
     return -1;
   }
+#endif
 
   err = mkdir(BCC_PROG_TAG_DIR, 0777);
   if (err && errno != EEXIST) {
