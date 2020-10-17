@@ -38,6 +38,7 @@
 #include "usdt.h"
 
 #include "BPF.h"
+#include "rbpf.h"
 
 namespace ebpf {
 
@@ -669,11 +670,19 @@ StatusTuple BPF::load_func(const std::string& func_name, bpf_prog_type type,
 }
 
 StatusTuple BPF::unload_func(const std::string& func_name) {
+  int res;
   auto it = funcs_.find(func_name);
   if (it == funcs_.end())
     return StatusTuple::OK();
 
-  int res = close(it->second);
+  if (enable_remote_libbpf) {
+      gen_req_para_t para = {
+          .server = "192.168.122.122",
+      };
+      res = remote_close_fd(&para, it->second);
+  } else {
+      res = close(it->second);
+  }
   if (res != 0)
     return StatusTuple(-1, "Can't close FD for %s: %d", it->first.c_str(), res);
 
