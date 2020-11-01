@@ -367,16 +367,35 @@ int BPFModule::create_maps(std::map<std::string, std::pair<int, int>> &map_tids,
 
     // if the map is shared, update fd in global and/or map ns
     if (table_it->second.is_shared) {
-      Path maps_ns_path({maps_ns_, map_name});
-      Path global_path({map_name});
+        Path maps_ns_path({maps_ns_, map_name});
+        Path global_path({map_name});
 
-      if (ts_->Find(maps_ns_path, table_it)) {
-        table_it->second.fd = ::dup(fd);
-      }
+        gen_req_para_t para = {
+            .server = "192.168.122.122",
+        };
+        if (ts_->Find(maps_ns_path, table_it)) {
+            if (enable_remote_libbpf) {
+                if (fd & 0x10000000) {
+                    table_it->second.fd = remote_dup_fd(&para, fd);
+                } else {
+                    table_it->second.fd = ::dup(fd);
+                }
+            } else {
+                table_it->second.fd = ::dup(fd);
+            }
+        }
 
-      if (ts_->Find(global_path, table_it)) {
-        table_it->second.fd = ::dup(fd);
-      }
+        if (ts_->Find(global_path, table_it)) {
+            if (enable_remote_libbpf) {
+                if (fd & 0x10000000) {
+                    table_it->second.fd = remote_dup_fd(&para, fd);
+                } else {
+                    table_it->second.fd = ::dup(fd);
+                }
+            } else {
+                table_it->second.fd = ::dup(fd);
+            }
+        }
     }
   }
 

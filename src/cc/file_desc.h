@@ -17,6 +17,7 @@
 #pragma once
 
 #include <unistd.h>
+#include "rbpf.h"
 
 namespace ebpf {
 
@@ -49,8 +50,20 @@ class FileDesc {
   FileDesc &operator=(const FileDesc &that) = delete;
 
   FileDesc dup() const {
+    int dup_fd;
     if (fd_ >= 0) {
-      int dup_fd = ::dup(fd_);
+        if (enable_remote_libbpf) {
+            if (fd_ & 0x10000000) {
+                gen_req_para_t para = {
+                    .server = "192.168.122.122",
+                };
+                dup_fd = remote_dup_fd(&para, fd_);
+            } else {
+                dup_fd = ::dup(fd_);
+            }
+        } else {
+            dup_fd = ::dup(fd_);
+        }
       return FileDesc(dup_fd);
     } else {
       return FileDesc(-1);
