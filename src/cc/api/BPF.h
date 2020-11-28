@@ -49,12 +49,14 @@ class BPF {
   explicit BPF(unsigned int flag = 0, TableStorage* ts = nullptr,
                bool rw_engine_enabled = bpf_module_rw_engine_enabled(),
                const std::string &maps_ns = "",
-               bool allow_rlimit = true, const ebpf::BPF *other = nullptr)
+               bool allow_rlimit = true, const ebpf::BPF *other = nullptr,
+               const std::string &node_name = "")
       : flag_(flag),
         bsymcache_(NULL),
         bpf_module_(new BPFModule(flag, ts, rw_engine_enabled, maps_ns,
                     allow_rlimit,
-                    other == nullptr ? "" : other->bpf_module_->id())) {}
+                    other == nullptr ? "" : other->bpf_module_->id(),
+                    nullptr, node_name)) {}
   StatusTuple init(const std::string& bpf_program,
                    const std::vector<std::string>& cflags = {},
                    const std::vector<USDT>& usdt = {});

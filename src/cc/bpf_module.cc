@@ -96,7 +96,8 @@ class MyMemoryManager : public SectionMemoryManager {
 
 BPFModule::BPFModule(unsigned flags, TableStorage *ts, bool rw_engine_enabled,
                      const std::string &maps_ns, bool allow_rlimit,
-                     const std::string &other_id, const char *dev_name)
+                     const std::string &other_id, const char *dev_name,
+                     const std::string &node_name)
     : flags_(flags),
       rw_engine_enabled_(rw_engine_enabled && bpf_module_rw_engine_enabled()),
       used_b_loader_(false),
@@ -105,7 +106,7 @@ BPFModule::BPFModule(unsigned flags, TableStorage *ts, bool rw_engine_enabled,
       id_(std::to_string((uintptr_t)this)),
       maps_ns_(maps_ns),
       other_id_(other_id),
-      ts_(ts), btf_(nullptr) {
+      ts_(ts), btf_(nullptr), node_name_(node_name) {
   ifindex_ = dev_name ? if_nametoindex(dev_name) : 0;
   initialize_rw_engine();
   LLVMInitializeBPFTarget();
@@ -272,7 +273,7 @@ void BPFModule::load_btf(sec_map_def &sections) {
   remapped_sources["/virtual/main.c"] = mod_src_;
   remapped_sources["/virtual/include/bcc/helpers.h"] = helpers_h->second;
 
-  BTF *btf = new BTF(flags_ & DEBUG_BTF, sections);
+  BTF *btf = new BTF(flags_ & DEBUG_BTF, sections, node_name_);
   int ret = btf->load(btf_sec, btf_sec_size, btf_ext_sec, btf_ext_sec_size,
                        remapped_sources);
   if (ret) {
@@ -339,6 +340,7 @@ int BPFModule::create_maps(std::map<std::string, std::pair<int, int>> &map_tids,
         attr.map_flags = map_flags;
         attr.map_ifindex = ifindex_;
         attr.inner_map_fd = inner_map_fd;
+        attr.host = node_name_.c_str();
 
         if (map_tids.find(map_name) != map_tids.end()) {
           attr.btf_fd = btf_->get_fd();
@@ -604,7 +606,7 @@ int BPFModule::annotate_prog_tag(const string &name, int prog_fd,
   if (err)
     return err;
 
-#ifndef ENABLE_REMOTE_LIBBPF
+#ifndef REMOTE_LIBBPF_SUPPORT
   err = bpf_prog_get_tag(prog_fd, &tag2);
   if (err)
     return err;
@@ -984,6 +986,7 @@ int BPFModule::bcc_func_load(int prog_type, const char *name,
     }
   }
 
+  attr.host = node_name_.c_str();
   ret = bcc_prog_load_xattr(&attr, prog_len, log_buf, log_buf_size, allow_rlimit_);
   if (btf_) {
     free(func_info);

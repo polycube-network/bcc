@@ -47,8 +47,8 @@ int32_t BTFStringTable::addString(std::string S) {
   return Offset;
 }
 
-BTF::BTF(bool debug, sec_map_def &sections) : debug_(debug),
-    btf_(nullptr), btf_ext_(nullptr), sections_(sections) {
+BTF::BTF(bool debug, sec_map_def &sections, const std::string &node_name) : debug_(debug),
+    btf_(nullptr), btf_ext_(nullptr), sections_(sections), node_name_(node_name) {
   if (!debug)
     libbpf_set_print(NULL);
 }
@@ -277,7 +277,7 @@ int BTF::load(uint8_t *btf_sec, uintptr_t btf_sec_size,
     return -1;
   }
 
-  if (btf__load(btf)) {
+  if (btf__load(btf, node_name_.c_str())) {
     btf__free(btf);
     warning("Loading .BTF section failed\n");
     return -1;

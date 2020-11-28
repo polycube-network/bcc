@@ -45,7 +45,6 @@ if(LIBBPF_FOUND)
   file(GLOB libbpf_sources "${extract_dir}/*.o")
 else()
   file(GLOB libbpf_sources "libbpf/src/*.c" "libbpf/src/remote_libbpf/src/client.c")
-  add_definitions(-DENABLE_REMOTE_LIBBPF)
 endif()
 
 set(libbpf_uapi libbpf/include/uapi/linux/)

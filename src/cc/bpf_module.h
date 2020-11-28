@@ -96,7 +96,8 @@ class BPFModule {
  public:
   BPFModule(unsigned flags, TableStorage *ts = nullptr, bool rw_engine_enabled = true,
             const std::string &maps_ns = "", bool allow_rlimit = true,
-            const std::string &other_id = "", const char *dev_name = nullptr);
+            const std::string &other_id = "", const char *dev_name = nullptr,
+            const std::string &node_name = "");
   ~BPFModule();
   int free_bcc_memory();
   int load_b(const std::string &filename, const std::string &proto_filename);
@@ -183,6 +184,10 @@ class BPFModule {
 
   // map of events -- key: event name, value: event fields
   std::map<std::string, std::vector<std::string>> perf_events_;
+
+#ifdef REMOTE_LIBBPF_SUPPORT
+  std::string node_name_;
+#endif
 };
 
 }  // namespace ebpf

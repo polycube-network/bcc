@@ -46,7 +46,7 @@ class BTFStringTable {
 
 class BTF {
  public:
-  BTF(bool debug, sec_map_def &sections);
+  BTF(bool debug, sec_map_def &sections, const std::string &node_name = "");
   ~BTF();
   int load(uint8_t *btf_sec, uintptr_t btf_sec_size,
            uint8_t *btf_ext_sec, uintptr_t btf_ext_sec_size,
@@ -74,6 +74,7 @@ class BTF {
   struct btf *btf_;
   struct btf_ext *btf_ext_;
   sec_map_def &sections_;
+  std::string node_name_;
 };
 
 } // namespace ebpf
