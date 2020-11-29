@@ -52,21 +52,17 @@ class FileDesc {
   FileDesc dup() const {
     int dup_fd;
     if (fd_ >= 0) {
-        if (enable_remote_libbpf) {
-            if (fd_ & 0x10000000) {
-                gen_req_para_t para = {
-                    .server = "192.168.122.122",
-                };
-                dup_fd = remote_dup_fd(&para, fd_);
-            } else {
-                dup_fd = ::dup(fd_);
-            }
+        if (fd_ & 0x10000000) {
+            gen_req_para_t para = {
+                .server = "192.168.122.122",
+            };
+            dup_fd = remote_dup_fd(&para, fd_);
         } else {
             dup_fd = ::dup(fd_);
         }
-      return FileDesc(dup_fd);
+        return FileDesc(dup_fd);
     } else {
-      return FileDesc(-1);
+        return FileDesc(-1);
     }
   }
 

@@ -376,7 +376,7 @@ int BPFModule::create_maps(std::map<std::string, std::pair<int, int>> &map_tids,
             .server = "192.168.122.122",
         };
         if (ts_->Find(maps_ns_path, table_it)) {
-            if (enable_remote_libbpf) {
+            if (!node_name_.empty()) {
                 if (fd & 0x10000000) {
                     table_it->second.fd = remote_dup_fd(&para, fd);
                 } else {
@@ -388,7 +388,7 @@ int BPFModule::create_maps(std::map<std::string, std::pair<int, int>> &map_tids,
         }
 
         if (ts_->Find(global_path, table_it)) {
-            if (enable_remote_libbpf) {
+            if (!node_name_.empty()) {
                 if (fd & 0x10000000) {
                     table_it->second.fd = remote_dup_fd(&para, fd);
                 } else {

@@ -185,9 +185,8 @@ class BPFModule {
   // map of events -- key: event name, value: event fields
   std::map<std::string, std::vector<std::string>> perf_events_;
 
-#ifdef REMOTE_LIBBPF_SUPPORT
+  // node_name_ is the remote host name,  "" if local bpf
   std::string node_name_;
-#endif
 };
 
 }  // namespace ebpf

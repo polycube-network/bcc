@@ -675,7 +675,7 @@ StatusTuple BPF::unload_func(const std::string& func_name) {
   if (it == funcs_.end())
     return StatusTuple::OK();
 
-  if (enable_remote_libbpf) {
+  if (!node_name_.empty()) {
       gen_req_para_t para = {
           .server = "192.168.122.122",
       };

@@ -53,6 +53,7 @@ class BPF {
                const std::string &node_name = "")
       : flag_(flag),
         bsymcache_(NULL),
+        node_name_(node_name),
         bpf_module_(new BPFModule(flag, ts, rw_engine_enabled, maps_ns,
                     allow_rlimit,
                     other == nullptr ? "" : other->bpf_module_->id(),
@@ -320,6 +321,8 @@ class BPF {
   std::map<std::string, BPFPerfBuffer*> perf_buffers_;
   std::map<std::string, BPFPerfEventArray*> perf_event_arrays_;
   std::map<std::pair<uint32_t, uint32_t>, open_probe_t> perf_events_;
+
+  std::string node_name_;
 };
 
 class USDT {
