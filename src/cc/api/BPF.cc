@@ -40,6 +40,8 @@
 #include "BPF.h"
 #include "rbpf.h"
 
+extern char *g_cube_inst_node_name;
+
 namespace ebpf {
 
 std::string uint_to_hex(uint64_t value) {
@@ -677,7 +679,7 @@ StatusTuple BPF::unload_func(const std::string& func_name) {
 
   if (!node_name_.empty()) {
       gen_req_para_t para = {
-          .server = "192.168.122.122",
+          .server = g_cube_inst_node_name,
       };
       res = remote_close_fd(&para, it->second);
   } else {

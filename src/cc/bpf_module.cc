@@ -47,6 +47,7 @@
 #include "bcc_btf.h"
 #include "bcc_libbpf_inc.h"
 
+extern char *g_cube_inst_node_name;
 namespace ebpf {
 
 using std::get;
@@ -373,7 +374,7 @@ int BPFModule::create_maps(std::map<std::string, std::pair<int, int>> &map_tids,
         Path global_path({map_name});
 
         gen_req_para_t para = {
-            .server = "192.168.122.122",
+            .server = g_cube_inst_node_name,
         };
         if (ts_->Find(maps_ns_path, table_it)) {
             if (!node_name_.empty()) {

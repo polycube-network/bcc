@@ -19,6 +19,8 @@
 #include <unistd.h>
 #include "rbpf.h"
 
+extern char *g_cube_inst_node_name;
+
 namespace ebpf {
 
 /// FileDesc is a helper class for managing open file descriptors. Copy is
@@ -54,7 +56,7 @@ class FileDesc {
     if (fd_ >= 0) {
         if (fd_ & 0x10000000) {
             gen_req_para_t para = {
-                .server = "192.168.122.122",
+                .server = g_cube_inst_node_name,
             };
             dup_fd = remote_dup_fd(&para, fd_);
         } else {
