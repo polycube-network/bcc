@@ -600,8 +600,11 @@ const char * BPFModule::function_source_rewritten(const string &name) const {
 
 int BPFModule::annotate_prog_tag(const string &name, int prog_fd,
                                  struct bpf_insn *insns, int prog_len) {
-  unsigned long long tag1, tag2;
+  unsigned long long tag1;
   int err;
+#ifndef REMOTE_LIBBPF_SUPPORT
+  unsigned long long tag2;
+#endif
 
   err = bpf_prog_compute_tag(insns, prog_len, &tag1);
   if (err)

@@ -305,6 +305,8 @@ class BPF {
 
   void *bsymcache_;
 
+  std::string node_name_;
+
   std::unique_ptr<std::string> syscall_prefix_;
 
   std::unique_ptr<BPFModule> bpf_module_;
@@ -322,7 +324,6 @@ class BPF {
   std::map<std::string, BPFPerfEventArray*> perf_event_arrays_;
   std::map<std::pair<uint32_t, uint32_t>, open_probe_t> perf_events_;
 
-  std::string node_name_;
 };
 
 class USDT {
